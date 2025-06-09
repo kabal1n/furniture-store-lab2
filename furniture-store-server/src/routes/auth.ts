@@ -5,13 +5,15 @@ import jwt from 'jsonwebtoken';
 
 const router = Router();
 
-const ACCESS_SECRET = process.env.ACCESS_SECRET || 'access-secret-key';
-const REFRESH_SECRET = process.env.REFRESH_SECRET || 'refresh-secret-key';
+const ACCESS_SECRET = process.env.ACCESS_SECRET!;
+const REFRESH_SECRET = process.env.REFRESH_SECRET!;
+if (!ACCESS_SECRET || !REFRESH_SECRET) throw new Error('JWT ключи не заданы');
 
 function generateTokens(payload: object) {
-  const accessToken = jwt.sign(payload, ACCESS_SECRET, { expiresIn: '15m' });
-  const refreshToken = jwt.sign(payload, REFRESH_SECRET, { expiresIn: '7d' });
-  return { accessToken, refreshToken };
+  return {
+    accessToken: jwt.sign(payload, ACCESS_SECRET, { expiresIn: '15m' }),
+    refreshToken: jwt.sign(payload, REFRESH_SECRET, { expiresIn: '7d' }),
+  };
 }
 
 /**
@@ -21,6 +23,7 @@ function generateTokens(payload: object) {
  *     summary: Вход администратора
  *     tags: [Auth]
  */
+
 router.post('/login', async (req: Request, res: Response) => {
   const { login, password } = req.body;
 
@@ -60,6 +63,7 @@ router.post('/login', async (req: Request, res: Response) => {
  *     summary: Обновление Access Token по Refresh Token
  *     tags: [Auth]
  */
+
 router.post('/refresh', (req: Request, res: Response) => {
   const token = req.cookies?.refreshToken;
   if (!token) return res.status(401).json({ error: 'Нет refresh токена' });
@@ -90,6 +94,7 @@ router.post('/refresh', (req: Request, res: Response) => {
  *     summary: Выход
  *     tags: [Auth]
  */
+
 router.post('/logout', (req: Request, res: Response) => {
   res
     .clearCookie('accessToken')

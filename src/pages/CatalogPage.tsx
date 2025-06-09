@@ -1,8 +1,20 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { fetchFurniture, FurnitureItem } from "../services/api";
 import { Link } from "react-router-dom";
 
-const CatalogPage: React.FC = () => {
+const colorNames: { [key: string]: string } = {
+  "#ffffff": "белый",
+  "#999999": "серый",
+  "#000000": "чёрный",
+  "#8b4513": "коричневый",
+  "#FF0000": "красный",
+  "#FFFF00": "жёлтый",
+  "#800080": "фиолетовый",
+  "#0000FF": "синий",
+  "#008000": "зелёный",
+};
+
+export default function CatalogPage() {
   const [furniture, setFurniture] = useState<FurnitureItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -11,13 +23,6 @@ const CatalogPage: React.FC = () => {
   const [typeFilter, setTypeFilter] = useState("");
   const [colorFilter, setColorFilter] = useState("");
 
-  const [minWidth, setMinWidth] = useState<number | undefined>();
-  const [maxWidth, setMaxWidth] = useState<number | undefined>();
-  const [minHeight, setMinHeight] = useState<number | undefined>();
-  const [maxHeight, setMaxHeight] = useState<number | undefined>();
-  const [minDepth, setMinDepth] = useState<number | undefined>();
-  const [maxDepth, setMaxDepth] = useState<number | undefined>();
-
   useEffect(() => {
     fetchFurniture({ search: searchQuery })
       .then(setFurniture)
@@ -25,57 +30,23 @@ const CatalogPage: React.FC = () => {
       .finally(() => setLoading(false));
   }, [searchQuery]);
 
-  const filteredFurniture = furniture.filter((item) => {
+  const filtered = furniture.filter((item) => {
     return (
       (!typeFilter || item.type === typeFilter) &&
-      (!colorFilter || item.color === colorFilter) &&
-      (!minWidth || item.width >= minWidth) &&
-      (!maxWidth || item.width <= maxWidth) &&
-      (!minHeight || item.height >= minHeight) &&
-      (!maxHeight || item.height <= maxHeight) &&
-      (!minDepth || item.depth >= minDepth) &&
-      (!maxDepth || item.depth <= maxDepth)
+      (!colorFilter || item.color === colorFilter)
     );
   });
 
-  const predefinedColors = [
-    { name: "Белый", value: "#ffffff" },
-    { name: "Серый", value: "#999999" },
-    { name: "Чёрный", value: "#000000" },
-    { name: "Коричневый", value: "#8b4513" },
-    { name: "Красный", value: "#FF0000" },
-    { name: "Желтый", value: "#FF0000" },
-    { name: "Фиолетовый", value: "#800080" },
-    { name: "Синий", value: "#0000FF" },
-    { name: "Зеленый", value: "#008000" },
-  ];
-
-  const colorNames: { [key: string]: string } = {
-    "#ffffff": "белый",
-    "#999999": "серый",
-    "#000000": "чёрный",
-    "#8b4513": "коричневый",
-    "#FF0000": "красный",
-    "#FFFF00": "желтый",
-    "#800080": "фиолетовый",
-    "#0000FF": "синий",
-    "#008000": "зеленый",
-  };
-
   return (
     <div>
-      <h2>Каталог мебели</h2>
-
-      <div className="d-flex justify-content-end mb-3">
-        <Link to="/login" className="btn btn-outline-primary">
-          Вход
-        </Link>
+      <div className="d-flex justify-content-between align-items-center mb-3">
+        <h2>Каталог мебели</h2>
+        <Link to="/login" className="btn btn-outline-primary">Вход</Link>
       </div>
 
       <div className="mb-3">
         <input
-          type="text"
-          className="form-control mb-3"
+          className="form-control"
           placeholder="Поиск по названию"
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
@@ -85,49 +56,41 @@ const CatalogPage: React.FC = () => {
       {loading && <p>Загрузка...</p>}
       {error && <p className="text-danger">{error}</p>}
 
-      <div className="mb-3">
-        <label className="me-2">Тип: </label>
-        <select onChange={(e) => setTypeFilter(e.target.value)} className="form-select d-inline w-auto me-3">
-          <option value="">Все</option>
-          <option value="стол">Стол</option>
-          <option value="диван">Диван</option>
-          <option value="шкаф">Шкаф</option>
-        </select>
+      <div className="mb-3 d-flex gap-3">
+        <div>
+          <label>Тип:</label>
+          <select value={typeFilter} onChange={(e) => setTypeFilter(e.target.value)} className="form-select">
+            <option value="">Все</option>
+            <option value="стол">Стол</option>
+            <option value="диван">Диван</option>
+            <option value="шкаф">Шкаф</option>
+          </select>
+        </div>
 
-        <label className="me-2">Цвет: </label>
-        <select
-          value={colorFilter}
-          onChange={(e) => setColorFilter(e.target.value)}
-          className="form-select d-inline w-auto"
-        >
-          <option value="">Все</option>
-          {predefinedColors.map((color) => (
-            <option key={color.value} value={color.value}>
-              {color.name}
-            </option>
-          ))}
-        </select>
+        <div>
+          <label>Цвет:</label>
+          <select value={colorFilter} onChange={(e) => setColorFilter(e.target.value)} className="form-select">
+            <option value="">Все</option>
+            {Object.entries(colorNames).map(([value, name]) => (
+              <option key={value} value={value}>{name}</option>
+            ))}
+          </select>
+        </div>
       </div>
 
-
-      <div className="row mt-4">
-        {filteredFurniture.map((item) => (
+      <div className="row">
+        {filtered.map((item) => (
           <div className="col-md-4 mb-4" key={item.id}>
             <Link to={`/item/${item.id}`} className="text-decoration-none text-dark">
               <div className="card h-100">
-                <img
-                  src={item.images[0]}
-                  className="card-img-top"
-                  alt={item.name}
-                />
+                <img src={item.images[0]} className="card-img-top" alt={item.name} />
                 <div className="card-body">
-                  <h5 className="card-title">{item.name}</h5>
+                  <h5>{item.name}</h5>
                   <p>{item.description}</p>
                   <p>
-                    <strong>Тип:</strong> {item.type} | <strong>Цвет:</strong> {colorNames[item.color] || item.color}
-                  </p>
-                  <p>
-                    <strong>ШхВхГ:</strong> {item.width}x{item.height}x{item.depth} см
+                    <strong>Тип:</strong> {item.type}<br />
+                    <strong>Цвет:</strong> {colorNames[item.color] || item.color}<br />
+                    <strong>Размер:</strong> {item.width}×{item.height}×{item.depth} см
                   </p>
                 </div>
               </div>
@@ -137,6 +100,4 @@ const CatalogPage: React.FC = () => {
       </div>
     </div>
   );
-};
-
-export default CatalogPage;
+}

@@ -17,7 +17,7 @@ model Furniture {
   height      Int
   depth       Int
   images      String[]     // массив URL
-  shelves     Int[] @default([])        // опционально, только если это шкаф
+  shelves     Int[] @default([])        
   createdAt   DateTime  @default(now())
   customModels CustomModel[]
 }

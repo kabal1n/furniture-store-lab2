@@ -11,27 +11,71 @@ export interface FurnitureItem {
   shelves?: number[];
 }
 
-const API_URL = "http://localhost:3001/furniture";
+export interface CustomModel {
+  id: number;
+  baseId: number;
+  base: {
+    name: string;
+    type: string;
+  };
+  data: {
+    color?: string;
+    width?: number;
+    height?: number;
+    depth?: number;
+    shelves?: number[];
+  };
+}
 
-type FetchFurnitureParams = {
+const BASE_URL = "http://localhost:3001";
+
+const checkRes = async (res: Response) => {
+  if (!res.ok) throw new Error(await res.text() || "Ошибка запроса");
+  return res.json();
+};
+
+export const fetchFurniture = async (params: {
   type?: string;
   color?: string;
   search?: string;
+} = {}): Promise<FurnitureItem[]> => {
+  const query = new URLSearchParams(params as Record<string, string>);
+  return checkRes(await fetch(`${BASE_URL}/furniture?${query}`, { credentials: 'include' }));
 };
 
-export const fetchFurniture = async (params: FetchFurnitureParams = {}): Promise<FurnitureItem[]> => {
-  const query = new URLSearchParams();
+export const fetchOneFurniture = async (id: string): Promise<FurnitureItem> => {
+  return checkRes(await fetch(`${BASE_URL}/furniture/${id}`));
+};
 
-  if (params.type) query.append('type', params.type);
-  if (params.color) query.append('color', params.color);
-  if (params.search) query.append('search', params.search);
+export const fetchCustomModels = async (): Promise<CustomModel[]> => {
+  return checkRes(await fetch(`${BASE_URL}/admin/custom-models`, { credentials: 'include' }));
+};
 
-  const url = `${API_URL}?${query.toString()}`;
+export const saveCustomModel = async (payload: {
+  baseId: number;
+  data: any;
+}): Promise<void> => {
+  await checkRes(await fetch(`${BASE_URL}/custom-model`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
+    body: JSON.stringify(payload),
+  }));
+};
 
-  const res = await fetch(url);
-  if (!res.ok) {
-    throw new Error("Ошибка загрузки данных");
-  }
+export const login = async (login: string, password: string): Promise<void> => {
+  const res = await fetch(`${BASE_URL}/login`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
+    body: JSON.stringify({ login, password }),
+  });
+  if (!res.ok) throw new Error((await res.json()).error || "Ошибка входа");
+};
 
-  return res.json();
+export const logout = async (): Promise<void> => {
+  await fetch(`${BASE_URL}/logout`, {
+    method: 'POST',
+    credentials: 'include',
+  });
 };

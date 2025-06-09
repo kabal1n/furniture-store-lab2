@@ -1,6 +1,6 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { FurnitureItem } from "../services/api";
+import { fetchOneFurniture, FurnitureItem } from "../services/api";
 
 const colorNames: { [key: string]: string } = {
   "#ffffff": "белый",
@@ -8,13 +8,13 @@ const colorNames: { [key: string]: string } = {
   "#000000": "чёрный",
   "#8b4513": "коричневый",
   "#FF0000": "красный",
-  "#FFFF00": "желтый",
+  "#FFFF00": "жёлтый",
   "#800080": "фиолетовый",
   "#0000FF": "синий",
-  "#008000": "зеленый"
+  "#008000": "зелёный",
 };
 
-const ItemPage: React.FC = () => {
+export default function ItemPage() {
   const { id } = useParams<{ id: string }>();
   const [item, setItem] = useState<FurnitureItem | null>(null);
   const [error, setError] = useState("");
@@ -22,45 +22,40 @@ const ItemPage: React.FC = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    fetch(`http://localhost:3001/furniture/${id}`)
-      .then((res) => {
-        if (!res.ok) throw new Error("Ошибка при загрузке");
-        return res.json();
-      })
+    if (!id) return;
+
+    fetchOneFurniture(id)
       .then(setItem)
       .catch((err) => setError(err.message))
       .finally(() => setLoading(false));
   }, [id]);
 
   if (loading) return <p>Загрузка...</p>;
-  if (error || !item) return <p className="text-danger">{error || "Не найдено"}</p>;
+  if (error || !item) return <p className="text-danger">{error || "Товар не найден"}</p>;
 
   return (
     <div>
       <h2>{item.name}</h2>
       <p>{item.description}</p>
-        <p>
-        <p><strong>Тип:</strong> {item.type}</p>  
-        <p><strong>Цвет:</strong> {colorNames[item.color] || item.color}</p>
-        <p><strong>Размер:</strong> {item.width}×{item.height}×{item.depth} см</p>
-        </p>
+
+      <p><strong>Тип:</strong> {item.type}</p>
+      <p><strong>Цвет:</strong> {colorNames[item.color] || item.color}</p>
+      <p><strong>Размер:</strong> {item.width}×{item.height}×{item.depth} см</p>
 
       <div className="row">
         {item.images.map((src, index) => (
-          <div className="col-md-4" key={index}>
-            <img src={src} alt={`Фото ${index + 1}`} className="img-fluid rounded mb-3" />
+          <div className="col-md-4 mb-3" key={index}>
+            <img src={src} alt={`Фото ${index + 1}`} className="img-fluid rounded border" />
           </div>
         ))}
       </div>
 
       <button
-        className="btn btn-primary"
+        className="btn btn-primary mt-3"
         onClick={() => navigate("/constructor", { state: { item } })}
       >
-        Открыть в конструкторе
+        🔧 Открыть в конструкторе
       </button>
     </div>
   );
-};
-
-export default ItemPage;
+}

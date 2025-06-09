@@ -1,46 +1,22 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { fetchCustomModels, logout, CustomModel } from "../services/api";
 
-type CustomModel = {
-  id: number;
-  baseId: number;
-  base: {
-    name: string;
-    type: string;
-  };
-  data: {
-    color?: string;
-    width?: number;
-    height?: number;
-    depth?: number;
-    shelves?: number[];
-  };
-};
-
-const AdminPage = () => {
+export default function AdminPage() {
   const [models, setModels] = useState<CustomModel[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
 
   useEffect(() => {
-    fetch('http://localhost:3001/admin/custom-models', {
-      credentials: 'include',
-    })
-      .then(async (res) => {
-        if (!res.ok) throw new Error('Ошибка доступа');
-        const data = await res.json();
-        setModels(data);
-      })
-      .catch((err) => setError(err.message))
+    fetchCustomModels()
+      .then(setModels)
+      .catch((e) => setError(e.message))
       .finally(() => setLoading(false));
   }, []);
 
   const handleLogout = async () => {
-    await fetch("http://localhost:3001/logout", {
-      method: "POST",
-      credentials: "include",
-    });
+    await logout();
     navigate("/login");
   };
 
@@ -49,30 +25,25 @@ const AdminPage = () => {
 
   return (
     <div>
-      <div className="d-flex justify-content-between align-items-center mb-3">
+      <div className="d-flex justify-content-between mb-3">
         <h2>Панель администратора</h2>
-        <button className="btn btn-outline-danger" onClick={handleLogout}>
-          Выйти
-        </button>
+        <button className="btn btn-outline-danger" onClick={handleLogout}>Выйти</button>
       </div>
 
       {models.length === 0 ? (
         <p>Нет кастомных моделей.</p>
       ) : (
         <ul>
-          {models.map((model) => (
-            <li key={model.id}>
-              <strong>{model.base.name}</strong> ({model.base.type})<br />
-              Размеры: {model.data?.width}×{model.data?.height}×{model.data?.depth} <br />
-              Цвет: {model.data?.color || '—'} <br />
-              Полки: {model.data?.shelves?.join(', ') || 'нет'} <br />
-              <hr />
+          {models.map((m) => (
+            <li key={m.id}>
+              <strong>{m.base.name}</strong> ({m.base.type})<br />
+              Размеры: {m.data?.width}×{m.data?.height}×{m.data?.depth}<br />
+              Цвет: {m.data?.color || '—'}<br />
+              Полки: {m.data?.shelves?.join(', ') || 'нет'}<hr />
             </li>
           ))}
         </ul>
       )}
     </div>
   );
-};
-
-export default AdminPage;
+}
